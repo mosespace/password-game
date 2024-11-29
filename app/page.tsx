@@ -1,101 +1,169 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+
+// Defining the password schema
+const passwordSchema = z.object({
+  password: z
+    .string()
+    .min(5, 'Your password must be at least 5 characters.')
+    .regex(/[0-9]/, 'Your password must include a number.')
+    .regex(/[A-Z]/, 'Your password must include an uppercase letter.'),
+});
+
+// Defining types for react-hook-form
+type FormValues = z.infer<typeof passwordSchema>;
+
+// Defining rules types
+interface Rule {
+  id: number;
+  description: string;
+  validator: (value: string) => boolean;
+}
+
+export default function page() {
+  const [visibleRules, setVisibleRules] = useState<number[]>([]);
+
+  const rules: Rule[] = [
+    {
+      id: 1,
+      description: 'Your password must be at least 5 characters.',
+      validator: (value) => value.length >= 5,
+    },
+    {
+      id: 2,
+      description: 'Your password must include a number.',
+      validator: (value) => /[0-9]/.test(value),
+    },
+    {
+      id: 3,
+      description: 'Your password must include an uppercase letter',
+      validator: (value) => /[A-Z]/.test(value),
+    },
+  ];
+
+  const {
+    register,
+    watch,
+    formState: { errors },
+  } = useForm<FormValues>({
+    resolver: zodResolver(passwordSchema),
+  });
+
+  const password = watch('password', '');
+
+  // Show first rule when a user immediately starts typying, then show next rules as previous ones are completed.
+  useEffect(() => {
+    if (password) {
+      // if no rules are visible yet and user started typing, show first rule
+      if (visibleRules.length === 0) {
+        setVisibleRules([1]);
+        return;
+      }
+
+      // show next rule when current rule is valid
+      const lastVisibleRule = visibleRules[visibleRules.length - 1];
+      const currentRule = rules.find((rule) => rule.id === lastVisibleRule);
+
+      if (currentRule && currentRule.validator(password)) {
+        const nextRuleId = lastVisibleRule + 1; // ie if the last visible rule was 0, i will add a 1 to make it 1
+        if (nextRuleId <= rules.length && !visibleRules.includes(nextRuleId)) {
+          setVisibleRules((prevRule) => [...prevRule, nextRuleId]);
+        }
+      }
+    } else {
+      // reset visible rules when input is empty
+      setVisibleRules([]);
+    }
+    return () => {};
+  }, [password, visibleRules]);
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div className="min-h-screen text-black bg-[#fffae9] p-8 flex flex-col items-center">
+      {/* main-title */}
+      <h1 className="text-4xl font-bold items-center flex justify-center mb-12">
+        <span className="text-8xl mr-2 mt-8">*</span>
+        The Password Game
+      </h1>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      <div className="w-full max-w-2xl">
+        <p className="text-lg mb-4">Please choose a password</p>
+
+        {/* input-field */}
+        <div className="relative mb-8">
+          <input
+            {...register('password')}
+            type="text"
+            className="w-full p-4 text-xl border-2 border-gray-300 rounded-lg"
+            placeholder="Enter password"
+          />
+
+          {/* password-length */}
+          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-lg">
+            {password.length}
+          </span>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        {/* password-rules */}
+        <div className="space-y-4">
+          {rules.map((rule) => {
+            if (!visibleRules.includes(rule.id)) return null;
+
+            const isValid = password ? rule.validator(password) : false;
+            return (
+              <div
+                key={rule.id}
+                className={`p-4 ${
+                  isValid
+                    ? 'bg-[#e8f5e9] border-[#c5e8c6]'
+                    : 'bg-[#f8afba] border-[#fb818c]'
+                } border rounded-lg  transion-colors  duration-300 text-black shadow-sm`}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  {isValid ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="lucide lucide-check size-5 text-green-600"
+                    >
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg>
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="lucide lucide-x size-5 text-red-600"
+                    >
+                      <path d="M18 6 6 18" />
+                      <path d="m6 6 12 12" />
+                    </svg>
+                  )}
+
+                  <span className="font-medium">Rule {rule.id}</span>
+                </div>
+                <p>{rule.description}</p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
