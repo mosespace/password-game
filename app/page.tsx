@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -26,7 +26,7 @@ interface Rule {
   validator: (value: string) => boolean;
 }
 
-export default function page() {
+export default function PasswordGamePage() {
   const [visibleRules, setVisibleRules] = useState<number[]>([]);
 
   const rules: Rule[] = [
@@ -96,7 +96,6 @@ export default function page() {
         'Your password must contain a mathematical equation that resolves to an integer',
       validator: (value) => {
         try {
-          // Check for an equation within the password
           const matches = value.match(/(\d+)\s*([+\-*/])\s*(\d+)\s*=\s*(\d+)/);
           if (!matches) return false;
 
@@ -144,27 +143,40 @@ export default function page() {
 
   const password = watch('password', '');
 
-  useEffect(() => {
-    if (password) {
-      if (visibleRules.length === 0) {
-        setVisibleRules([1]);
-        return;
+  const updateVisibleRules = useCallback(() => {
+    if (!password) {
+      setVisibleRules([]);
+      return;
+    }
+
+    setVisibleRules((prevVisibleRules) => {
+      // If no rules are visible, show the first rule
+      if (prevVisibleRules.length === 0) {
+        return [1];
       }
 
-      const lastVisibleRule = visibleRules[visibleRules.length - 1];
+      // Find the last visible rule
+      const lastVisibleRule = prevVisibleRules[prevVisibleRules.length - 1];
       const currentRule = rules.find((rule) => rule.id === lastVisibleRule);
 
+      // If current rule is valid, show next rule
       if (currentRule && currentRule.validator(password)) {
         const nextRuleId = lastVisibleRule + 1;
-        if (nextRuleId <= rules.length && !visibleRules.includes(nextRuleId)) {
-          setVisibleRules((prevRule) => [...prevRule, nextRuleId]);
+        if (
+          nextRuleId <= rules.length &&
+          !prevVisibleRules.includes(nextRuleId)
+        ) {
+          return [...prevVisibleRules, nextRuleId];
         }
       }
-    } else {
-      setVisibleRules([]);
-    }
-    return () => {};
-  }, [password, visibleRules]);
+
+      return prevVisibleRules;
+    });
+  }, [password, rules]);
+
+  useEffect(() => {
+    updateVisibleRules();
+  }, [updateVisibleRules]);
 
   // Render method remains the same as in previous version
   return (
