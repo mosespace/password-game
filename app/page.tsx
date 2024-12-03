@@ -26,7 +26,7 @@ interface Rule {
   validator: (value: string) => boolean;
 }
 
-export default function page() {
+export default function Page() {
   const [visibleRules, setVisibleRules] = useState<number[]>([]);
 
   const rules: Rule[] = [
@@ -163,10 +163,15 @@ export default function page() {
     } else {
       setVisibleRules([]);
     }
-    return () => {};
   }, [password, visibleRules, rules]);
 
-  // Render method remains the same as in previous version
+  const fulfilledRules = rules.filter(
+    (rule) => visibleRules.includes(rule.id) && rule.validator(password),
+  );
+  const unfulfilledRules = rules.filter(
+    (rule) => visibleRules.includes(rule.id) && !rule.validator(password),
+  );
+
   return (
     <div className="min-h-screen text-black bg-[#fffae9] p-8 flex flex-col items-center">
       <h1 className="text-4xl font-bold items-center flex justify-center mb-12">
@@ -191,59 +196,62 @@ export default function page() {
         </div>
 
         <div className="space-y-4">
-          {rules.map((rule) => {
-            if (!visibleRules.includes(rule.id)) return null;
+          {/* Show errors at the top */}
+          {unfulfilledRules.map((rule) => (
+            <div
+              key={rule.id}
+              className="p-4 bg-[#f8afba] border-[#fb818c] border rounded-lg text-black shadow-sm"
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="lucide lucide-x size-5 text-red-600"
+                >
+                  <path d="M18 6 6 18" />
+                  <path d="m6 6 12 12" />
+                </svg>
 
-            const isValid = password ? rule.validator(password) : false;
-            return (
-              <div
-                key={rule.id}
-                className={`p-4 ${
-                  isValid
-                    ? 'bg-[#e8f5e9] border-[#c5e8c6]'
-                    : 'bg-[#f8afba] border-[#fb818c]'
-                } border rounded-lg  transion-colors  duration-300 text-black shadow-sm`}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  {isValid ? (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="lucide lucide-check size-5 text-green-600"
-                    >
-                      <path d="M20 6 9 17l-5-5" />
-                    </svg>
-                  ) : (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="lucide lucide-x size-5 text-red-600"
-                    >
-                      <path d="M18 6 6 18" />
-                      <path d="m6 6 12 12" />
-                    </svg>
-                  )}
-
-                  <span className="font-medium">Rule {rule.id}</span>
-                </div>
-                <p>{rule.description}</p>
+                <span className="font-medium">Rule {rule.id}</span>
               </div>
-            );
-          })}
+              <p>{rule.description}</p>
+            </div>
+          ))}
+
+          {/* Show fulfilled rules at the bottom */}
+          {fulfilledRules.map((rule) => (
+            <div
+              key={rule.id}
+              className="p-4 bg-[#e8f5e9] border-[#c5e8c6] border rounded-lg text-black shadow-sm"
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="lucide lucide-check size-5 text-green-600"
+                >
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
+
+                <span className="font-medium">Rule {rule.id}</span>
+              </div>
+              <p>{rule.description}</p>
+            </div>
+          ))}
         </div>
       </div>
     </div>
