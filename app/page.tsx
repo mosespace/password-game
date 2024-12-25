@@ -1,6 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -175,7 +176,13 @@ export default function Page() {
   return (
     <div className="min-h-screen text-black bg-[#fffae9] p-8 flex flex-col items-center">
       <h1 className="text-4xl font-bold items-center flex justify-center mb-12">
-        <span className="text-8xl mr-2 mt-8">*</span>
+        <Image
+          src="/logo.svg"
+          width={200}
+          height={200}
+          className="w-[3rem] h-[3rem] mr-2"
+          alt="The Password Game Built By Mosespace"
+        />
         The Password Game
       </h1>
 
